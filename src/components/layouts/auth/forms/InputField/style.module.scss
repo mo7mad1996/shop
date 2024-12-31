@@ -1,0 +1,45 @@
+.form-input {
+  padding: 10px 4px;
+  margin-bottom: 1em;
+  position: relative;
+
+  label {
+    position: absolute;
+    transition: 0.3s;
+    top: 0.5em;
+    right: 0;
+    font-size: 1em;
+    min-height: 1em;
+    line-height: 1;
+    background: transparent;
+    display: flex;
+    gap: 0.7em;
+
+    svg {
+      width: 1em;
+    }
+  }
+
+  input {
+    display: block;
+    outline: none;
+    width: 100%;
+    border: none;
+    margin-top: 10px;
+    background: none;
+    border-bottom: 1px solid white;
+
+    &[type="file"] {
+      opacity: 0;
+      position: absolute;
+      inset: 0;
+      cursor: pointer;
+    }
+  }
+
+  input:valid + label,
+  input:focus + label {
+    top: -0.6em;
+    font-size: 0.8em;
+  }
+}

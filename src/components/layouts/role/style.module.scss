@@ -1,0 +1,28 @@
+.header {
+  backdrop-filter: blur(3px);
+  position: sticky;
+  top: 0;
+}
+
+.link {
+  @apply flex items-center gap-2 w-full cursor-pointer;
+  color: #555;
+}
+
+.clock {
+  text-align: center;
+  line-height: 1.2;
+
+  .time {
+    font-size: 22px;
+
+    .a {
+      font-size: 14px;
+      color: #555;
+    }
+  }
+  .date {
+    color: #b9b8bd;
+    font-size: 17px;
+  }
+}
