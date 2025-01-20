@@ -5,7 +5,7 @@ body {
 }
 
 body {
-  background-image: url("@/assets/images/bg.png");
+  background-image: url("../images/bg.png");
 }
 
 * {
@@ -14,4 +14,18 @@ body {
   color: inherit;
   outline: none !important;
   direction: rtl;
+}
+pre {
+  direction: ltr !important;
+}
+
+svg {
+  display: inline-block;
+}
+
+h1 {
+  @apply text-3xl;
+}
+h2 {
+  @apply text-2xl;
 }

@@ -1,5 +1,9 @@
-.btn {
+.btn-rounded {
   @apply rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center  gap-2 hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44;
+}
+
+.btn {
+  @apply flex gap-3 px-3 py-2 rounded bg-sky-800 text-white justify-center items-center text-sm hover:bg-sky-600 transition-all;
 }
 
 .flex-center {
@@ -42,3 +46,12 @@
 // .css-113d811-MuiFormLabel-root-MuiInputLabel-root {
 //   color: inherit;
 // }
+
+.ltr *,
+.ltr {
+  direction: ltr;
+}
+.rtl *,
+.rtl {
+  direction: rtl;
+}

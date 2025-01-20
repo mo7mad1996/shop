@@ -1,30 +1,39 @@
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
+import bcryptjs from "bcryptjs";
 
-const Shop = new mongoose.Schema({
-  password: String,
-  expired: Date,
-  logo: String,
-  name: String,
-  address: String,
-  phone: String,
-  tiktok: String,
-  twitter: String,
-  cr: String,
-});
+const ShopSchema = new mongoose.Schema(
+  {
+    password: {
+      type: String,
+      required: true,
+    },
+    expired: Date,
+    logo: String,
+    name: String,
+    address: String,
+    currency: String,
+    phone: String,
+    tiktok: String,
+    twitter: String,
+    cr: String,
+  },
+  {
+    timestamps: true,
+  }
+);
 
 // Hash password before saving
-Shop.pre("save", async function (next) {
+ShopSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  const salt = await bcryptjs.genSalt(10);
+  this.password = await bcryptjs.hash(this.password, salt);
   next();
 });
 
 // Method to compare password
-Shop.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+ShopSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcryptjs.compare(candidatePassword, this.password);
 };
 
-export default mongoose.models.shop || mongoose.model("shop", Shop);
+export default mongoose.models.Shop || mongoose.model("Shop", ShopSchema);

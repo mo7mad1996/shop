@@ -12,7 +12,7 @@ function InputField(props) {
 
   return (
     <div className={css["form-input"]}>
-      <input {...props} id={id} autoComplete="off" />
+      <input {...props} id={id} autoComplete="off" {...props.register} />
       <label htmlFor={id}>
         {props.icon}
         {props.title}

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 import connectDB from "@/lib/db";
-import User from "@/models/User";
+import User from "@/Models/User";
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
@@ -15,8 +15,8 @@ export async function POST(req) {
     const user = await User.findOne({ username });
     if (!user) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
+        { error: "رقم المستخدم او كلمة المرور غير صحيحه" },
+        { status: 400 }
       );
     }
 
@@ -24,23 +24,19 @@ export async function POST(req) {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
       return NextResponse.json(
-        { error: "Invalid credentials" },
-        { status: 401 }
+        { error: "رقم المستخدم او كلمة المرور غير صحيحه" },
+        { status: 400 }
       );
     }
+
+    user.login();
 
     // Create token
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    const response = NextResponse.json({
-      user: {
-        id: user._id,
-        username: user.username,
-        name: user.name,
-      },
-    });
+    const response = NextResponse.json({ user });
 
     // Set cookie
     response.cookies.set("token", token, {
@@ -58,4 +54,18 @@ export async function POST(req) {
       { status: 500 }
     );
   }
+}
+
+export function DELETE(req) {
+  const response = NextResponse.json({ logout: true });
+
+  // Set cookie
+  response.cookies.set("token", null, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "strict",
+    maxAge: -1,
+  });
+
+  return response;
 }

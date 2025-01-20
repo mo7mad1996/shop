@@ -1,6 +1,11 @@
 "use client";
 import { useForm } from "react-hook-form";
+import axios from "axios";
+import { toast } from "react-toastify";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useUserContext } from "~/context/user";
+import moment from "moment";
 
 // components
 import InputField from "@/components/layouts/auth/forms/InputField";
@@ -10,13 +15,13 @@ import { Button } from "@/components/ui/button";
 import { FaUser } from "react-icons/fa";
 import { TbPasswordFingerprint } from "react-icons/tb";
 import { BiLogInCircle } from "react-icons/bi";
-import { useApi } from "@/lib/api";
 
 // component
 export default function Login() {
   // config
+  const router = useRouter();
   const { register, handleSubmit } = useForm();
-  const api = useApi();
+  const { setUser } = useUserContext();
 
   // data
   const [loading, setLoading] = useState(false);
@@ -26,11 +31,21 @@ export default function Login() {
     try {
       setLoading(true);
 
-      const res = await api.post("/api/auth", payload);
+      // send request
+      const res = await axios.post("/api/auth", payload);
+      const { user } = res.data;
 
-      console.log(res);
+      setUser(user);
+      // actions
+      router.push(user?.role);
+      if (user.lastLogin)
+        toast.success(
+          "اهلا بعودتك اخر تسجيل دخول كان في" +
+            moment(user.lastLogin).format("L, LTS")
+        );
     } catch (err) {
       console.error(err);
+      toast.error(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }
@@ -49,14 +64,14 @@ export default function Login() {
           icon={<FaUser />}
           required
           autoFocus
-          {...register("username")}
+          register={register("username")}
         />
         <InputField
           title="كلمة المرور"
           required
           icon={<TbPasswordFingerprint />}
           type="password"
-          {...register("password")}
+          register={register("password")}
         />
 
         <Button

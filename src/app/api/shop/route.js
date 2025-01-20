@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import DBconnect from "@/lib/dbConnection";
+import DBconnect from "@/lib/db";
 import controller from "@/controllers/trueemit";
 
 DBconnect();

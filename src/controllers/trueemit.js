@@ -2,7 +2,6 @@ import fs from "fs";
 
 // models
 import Shop from "@/Models/Shop";
-import User from "@/Models/User";
 
 const filepath = "secret";
 // GET /api/trueemit/isValid
@@ -28,6 +27,8 @@ export const get = async (req, res) => {
     return res.json({ fileExists, shop });
   } catch (err) {
     console.error(err);
+
+    return res.json({ err: err }, { status: 403 });
   }
 };
 
@@ -37,7 +38,7 @@ function deleteFile() {
 }
 async function createAnewShop(res) {
   // 1) read file content
-  const content = fs.readFileSync(filepath, "utf-8");
+  const password = fs.readFileSync(filepath, "utf-8");
 
   // 2) create a shop
   const shop = await Shop.create({ password });
@@ -48,10 +49,9 @@ async function createAnewShop(res) {
 function checkIsExpired(res, shop) {
   const isExpired = new Date(shop.expired) < new Date();
 
-  console.log({ isExpired });
   if (isExpired)
     return res.json({ redirect: true, path: "/trueemit/newPeriod" });
-  if (isExpired) return res.json({ redirect: false });
+  else return res.json({ redirect: false });
 }
 
 // POST /api/trueemit/isValid
@@ -61,7 +61,8 @@ export const checkPassword = async (req, res) => {
   const shop = await Shop.findOne();
   const isValid = await shop.comparePassword(password);
 
-  return res.json({ isValid });
+  if (isValid) return res.json({ isValid });
+  else return res.json({ error: "كلمة المرور خطأ" }, { status: 400 });
 };
 
 export const updateShop = async (req, res) => {
@@ -72,6 +73,7 @@ export const updateShop = async (req, res) => {
     return res.json(shop);
   } catch (err) {
     console.error(err);
+    return res.json({ error: "Internal server error" }, { status: 500 });
   }
 };
 

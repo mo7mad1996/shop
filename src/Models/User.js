@@ -1,28 +1,53 @@
 import mongoose from "mongoose";
+import bcryptjs from "bcryptjs";
 
-const User = new mongoose.Schema({
-  name: String,
-  username: String,
-  password: String,
-  role: {
-    type: String,
-    enum: ["casher", "manager"],
-    default: "manager",
+const UserSchema = new mongoose.Schema(
+  {
+    name: String,
+    username: {
+      type: String,
+      required: true,
+      unique: true,
+    },
+    password: {
+      type: String,
+      required: true,
+    },
+    role: {
+      type: String,
+      enum: ["casher", "manager"],
+      default: "manager",
+    },
+    lastLogin: Date,
   },
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Hash password before saving
-User.pre("save", async function (next) {
+UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
+  const salt = await bcryptjs.genSalt(10);
+  this.password = await bcryptjs.hash(this.password, salt);
+  next();
+});
+// Hash password before update
+UserSchema.pre("findOneAndUpdate", async function (next) {
+  const salt = await bcryptjs.genSalt(10);
+  this._update.password = await bcryptjs.hash(this._update.password, salt);
   next();
 });
 
 // Method to compare password
-Shop.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
+UserSchema.methods.comparePassword = async function (candidatePassword) {
+  return await bcryptjs.compare(candidatePassword, this.password);
 };
 
-export default mongoose.models.user || mongoose.model("user", User);
+UserSchema.methods.login = async function () {
+  this.lastLogin = Date.now();
+  await this.save();
+};
+
+export default mongoose.models.User || mongoose.model("User", UserSchema);

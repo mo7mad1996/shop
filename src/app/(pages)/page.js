@@ -1,5 +1,9 @@
 import Link from "next/link";
+
+
+// icons
 import { MdLogin } from "react-icons/md";
+
 
 export default function Home() {
   return (
@@ -7,7 +11,7 @@ export default function Home() {
       <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
         <div className="flex gap-4 items-center flex-col sm:flex-row">
           {/* btn */}
-          <Link className="btn" href="/login">
+          <Link className="btn-rounded" href="/login">
             <MdLogin />
             تسجيل الدخول →
           </Link>

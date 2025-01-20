@@ -1,7 +1,7 @@
 import { AbsoluteCenter, Button as ChakraButton } from "@chakra-ui/react";
 import * as React from "react";
 
-import Loader from "@/components/Loader";
+import {Loader} from "@/components/Loader";
 
 export const Button = React.forwardRef(function Button(props, ref) {
   const { loading, disabled, loadingText, children, ...rest } = props;

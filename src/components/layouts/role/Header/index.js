@@ -1,19 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useUserContext } from "~/context/user";
 
 // components
 import Link from "next/link";
 import Image from "next/image";
 import { Container, IconButton } from "@chakra-ui/react";
-import {
-  MenuContent,
-  MenuItem,
-  MenuRoot,
-  MenuTrigger,
-  MenuSeparator,
-  MenuItemGroup,
-} from "@/components/ui/menu";
+import * as MenuUI from "@/components/ui/menu";
 import moment from "moment-timezone";
+import axios from "axios";
 
 // icons
 import { LuLayoutDashboard } from "react-icons/lu";
@@ -31,9 +27,19 @@ import css from "./style.module.scss";
 
 // component
 export default function Header() {
+  const search = useSearchParams();
+  const headerSearch = search.get("header");
+
+  if (headerSearch == "no") return <></>;
+
+  // setup
+  const { user } = useUserContext();
+
   // render
   return (
-    <header className={`${css.header} mb-3 bg-[#fff3] shadow-lg`}>
+    <header
+      className={`${css.header} mb-3 bg-[#fffa] shadow-lg z-10 sticky top-0`}
+    >
       <Container>
         <div className="flex items-center gap-2 py-3">
           <div className="logo">
@@ -43,8 +49,8 @@ export default function Header() {
           </div>
 
           <p className="flex-1 self-end">
-            أهلا
-            <span> احمد</span>
+            أهلا،
+            <span> {user.name}</span>
           </p>
 
           <Clock />
@@ -57,6 +63,10 @@ export default function Header() {
 
 // compoenent
 function Menu() {
+  // config
+  const router = useRouter();
+  const { user } = useUserContext();
+
   // data
   const data = [
     [
@@ -64,31 +74,46 @@ function Menu() {
         title: "الرئيسيه",
         name: "home",
         icon: <LuLayoutDashboard />,
-        action() {},
+        action() {
+          router.push("/");
+        },
+        role: ["casher", "manager"],
       },
       {
         title: "المشتريات",
         name: "purchases",
         icon: <RiBillLine />,
-        action() {},
+        action() {
+          router.push("/manager/purchases");
+        },
+        role: ["manager"],
       },
       {
         title: "المبيعات",
         name: "sales",
         icon: <LiaMoneyBillWaveSolid />,
-        action() {},
+        action() {
+          router.push("/manager/sales");
+        },
+        role: ["manager"],
       },
       {
         title: "المخزن",
         name: "inventory",
         icon: <GrDocumentStore />,
-        action() {},
+        action() {
+          router.push("/manager/inventory");
+        },
+        role: ["manager"],
       },
       {
         title: "العملاء",
         name: "clients",
         icon: <GoPeople />,
-        action() {},
+        action() {
+          router.push("/manager/clients");
+        },
+        role: ["manager"],
       },
     ],
     [
@@ -96,7 +121,10 @@ function Menu() {
         title: "الإعدادات",
         name: "settings",
         icon: <RiSettingsLine />,
-        action() {},
+        action() {
+          router.push(`/${user.role}/settings`);
+        },
+        role: ["casher", "manager"],
       },
     ],
     [
@@ -104,45 +132,50 @@ function Menu() {
         title: "تسجيل الخروج",
         name: "logout",
         icon: <MdPowerSettingsNew />,
-        action() {},
+        action() {
+          axios.delete("/api/auth").then((d) => router.push("/login"));
+        },
         attr: {
           color: "fg.error",
           _hover: { bg: "bg.error", color: "fg.error" },
         },
+        role: ["casher", "manager"],
       },
     ],
   ];
 
   // render
   return (
-    <MenuRoot>
-      <MenuTrigger asChild>
+    <MenuUI.MenuRoot>
+      <MenuUI.MenuTrigger asChild>
         <IconButton aria-label="toggle menu" variant="outline">
           <RxHamburgerMenu />
         </IconButton>
-      </MenuTrigger>
+      </MenuUI.MenuTrigger>
 
-      <MenuContent>
+      <MenuUI.MenuContent>
         {data.map((g, i) => (
-          <MenuItemGroup key={i} title="">
-            {i > 0 && <MenuSeparator />}
-            {g.map((l, i) => (
-              <MenuItem
-                onClick={(e) => l.action(e)}
-                className={css.link}
-                key={i}
-                value={l.name}
-                {...l.attr}
-                title={l.title}
-              >
-                {l.icon}
-                {l.title}
-              </MenuItem>
-            ))}
-          </MenuItemGroup>
+          <MenuUI.MenuItemGroup key={i} title="">
+            {i > 0 && <MenuUI.MenuSeparator />}
+            {g
+              .filter((e) => e.role.includes(user.role))
+              .map((l, i) => (
+                <MenuUI.MenuItem
+                  onClick={(e) => l.action(e)}
+                  className={css.link}
+                  key={i}
+                  value={l.name}
+                  {...l.attr}
+                  title={l.title}
+                >
+                  {l.icon}
+                  {l.title}
+                </MenuUI.MenuItem>
+              ))}
+          </MenuUI.MenuItemGroup>
         ))}
-      </MenuContent>
-    </MenuRoot>
+      </MenuUI.MenuContent>
+    </MenuUI.MenuRoot>
   );
 }
 

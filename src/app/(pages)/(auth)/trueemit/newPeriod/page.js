@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import axios from "axios";
@@ -11,7 +11,7 @@ import * as ChakraSteps from "@/components/ui/steps";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import InputField from "@/components/layouts/auth/forms/InputField";
-import Loader from "@/components/Loader";
+import {Loader} from "@/components/Loader";
 
 // icons
 import { IoLockClosedOutline } from "react-icons/io5";
@@ -21,7 +21,9 @@ import { FcPrevious } from "react-icons/fc";
 import { SlCalender } from "react-icons/sl";
 
 // component
-export default function newPeriod() {
+export default function NewPeriod() {
+  const router = useRouter();
+
   const [step, setStep] = useState(0);
   const steps = [
     {
@@ -35,7 +37,7 @@ export default function newPeriod() {
   ];
 
   useEffect(() => {
-    if (step == steps.length) redirect("/login");
+    if (step == steps.length) router.push("/login");
   }, [step]);
 
   return (
@@ -56,6 +58,7 @@ export default function newPeriod() {
           </a>
         </p>
       </div>
+
       <ChakraSteps.StepsRoot
         count={steps.length}
         linear={true}
@@ -99,23 +102,22 @@ const Password = ({ action }) => {
     try {
       const res = await axios.post("/api/shop", payload);
       if (res.data.isValid) action();
-      else toast.error("كلمة المرور غير صحيحه");
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.date || err.message);
+      toast.error(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }
   };
   return (
     <form onSubmit={handleSubmit(submit)}>
+      {/*  <input */}
       <InputField
-        name="password"
         title="كملة مرور trueemit"
         required
         icon={<TbPasswordUser />}
         type="password"
-        {...register("password")}
+        register={register("password")}
       />
 
       <Button
@@ -142,7 +144,7 @@ const SelectDate = ({ action }) => {
       action();
     } catch (err) {
       console.error(err);
-      toast.error(err.response.data || err.message);
+      toast.error(err.response?.data || err.message);
     } finally {
       setLoading(false);
     }

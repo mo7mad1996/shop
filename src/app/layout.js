@@ -1,15 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.scss";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata = {
   title: "Create Next App",
@@ -17,14 +6,15 @@ export const metadata = {
 };
 
 import Providers from "@/components/layouts/Providers";
+import UserContextProvider from "@/components/layouts/Providers/UserContextProvider";
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en" dir="rtl" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased Alexandria-font`}
-      >
-        <Providers>{children}</Providers>
+      <body className={`antialiased Alexandria-font`}>
+        <UserContextProvider>
+          <Providers>{children}</Providers>
+        </UserContextProvider>
       </body>
     </html>
   );

@@ -1,5 +1,6 @@
 // components
-import { Grid, Link, For, Box, GridItem } from "@chakra-ui/react";
+import { Grid, For, Box, GridItem } from "@chakra-ui/react";
+import Link from "next/link";
 
 // icons
 import { LiaMoneyBillWaveSolid } from "react-icons/lia";

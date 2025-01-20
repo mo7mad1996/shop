@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import dayjs from "dayjs";
 import axios from "axios";
@@ -12,7 +12,7 @@ import * as FileUpload from "@/components/ui/file-upload";
 import { Button } from "@/components/ui/button";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import InputField from "@/components/layouts/auth/forms/InputField";
-import Loader from "@/components/Loader";
+import { Loader } from "@/components/Loader";
 
 // icons
 import { IoLockClosedOutline, IoLogoAppleAr } from "react-icons/io5";
@@ -29,10 +29,14 @@ import { FcPrevious } from "react-icons/fc";
 import { SlCalender } from "react-icons/sl";
 import { TiUser } from "react-icons/ti";
 import { FaRegIdCard } from "react-icons/fa6";
-import { RiLockPasswordFill } from "react-icons/ri";
+import { RiLockPasswordFill , RiBillLine} from "react-icons/ri";
+
 
 // component
-export default function newClient() {
+export default function NewClient() {
+  const router = useRouter();
+
+  // data
   const [step, setStep] = useState(0);
   const steps = [
     {
@@ -58,7 +62,7 @@ export default function newClient() {
   ];
 
   useEffect(() => {
-    if (step == steps.length) redirect("/login");
+    if (step == steps.length) router.push("/login");
   }, [step]);
 
   return (
@@ -121,10 +125,9 @@ const Password = ({ action }) => {
     try {
       const res = await axios.post("/api/shop", payload);
       if (res.data.isValid) action();
-      else toast.error("كلمة المرور غير صحيحه");
     } catch (err) {
       console.error(err);
-      toast.error(err.response?.date || err.message);
+      toast.error(err.response?.date?.error || err.message);
     } finally {
       setLoading(false);
     }
@@ -137,7 +140,7 @@ const Password = ({ action }) => {
         required
         icon={<TbPasswordUser />}
         type="password"
-        {...register("password")}
+        register={register("password")}
       />
 
       <Button
@@ -164,7 +167,7 @@ const SelectDate = ({ action }) => {
       action();
     } catch (err) {
       console.error(err);
-      toast.error(err.response.data || err.message);
+      toast.error(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }
@@ -218,7 +221,7 @@ const Store1 = ({ action }) => {
       action();
     } catch (err) {
       console.error(err);
-      toast.error(err.response.data || err.message);
+      toast.error(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }
@@ -251,12 +254,17 @@ const Store1 = ({ action }) => {
         required
         icon={<RxCodesandboxLogo />}
         title="الاسم"
-        {...register("name")}
+        register={register("name")}
       />
       <InputField
         title="العنوان"
         icon={<MdOutlineLocationOn />}
-        {...register("address")}
+        register={register("address")}
+      />
+      <InputField
+        title="العمله"
+        icon={<RiBillLine />}
+        register={register("currency")}
       />
 
       <Button
@@ -282,7 +290,7 @@ const Store2 = ({ action }) => {
       action();
     } catch (err) {
       console.error(err);
-      toast.error(err.response.data || err.message);
+      toast.error(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }
@@ -293,22 +301,22 @@ const Store2 = ({ action }) => {
       <InputField
         icon={<PiPhoneDisconnect />}
         title="رقم الهاتف"
-        {...register("phone")}
+        register={register("phone")}
       />
       <InputField
         icon={<BiLogoTiktok />}
         title="tiktok"
-        {...register("tiktok")}
+        register={register("tiktok")}
       />
       <InputField
         icon={<FaTwitter />}
         title="twitter"
-        {...register("twitter")}
+        register={register("twitter")}
       />
       <InputField
         icon={<FaRegRegistered />}
         title="سجل تجاري"
-        {...register("cr")}
+        register={register("cr")}
       />
 
       <Button
@@ -334,7 +342,7 @@ const User = ({ action }) => {
       action();
     } catch (err) {
       console.error(err);
-      toast.error(err.response.data || err.message);
+      toast.error(err.response?.data?.error || err.message);
     } finally {
       setLoading(false);
     }
@@ -346,19 +354,20 @@ const User = ({ action }) => {
         icon={<TiUser />}
         title="اسم المستخدم"
         required
-        {...register("name")}
+        register={register("name")}
       />
       <InputField
         required
         icon={<FaRegIdCard />}
         title="رقم المستخدم"
-        {...register("username")}
+        register={register("username")}
       />
       <InputField
         required
         icon={<RiLockPasswordFill />}
         title="كلمة المرور"
-        {...register("password")}
+        type="password"
+        register={register("password")}
       />
 
       <Button
