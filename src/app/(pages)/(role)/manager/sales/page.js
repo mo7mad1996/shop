@@ -6,17 +6,15 @@ import moment from "moment";
 import PageHeader from "~/components/layouts/role/PageHeader";
 import { Table } from "@chakra-ui/react";
 import Loader from "~/components/Loader";
-import Link from "next/link";
 
 // icons
-import { RiBillLine } from "react-icons/ri";
-import { TbLayoutGridAdd } from "react-icons/tb";
+import { LiaMoneyBillWaveSolid } from "react-icons/lia";
 import axios from "axios";
 import { toast } from "react-toastify";
 import { useUserContext } from "@/context/user";
 import { useRouter } from "next/navigation";
 
-export default function PurchasesPage() {
+export default function SalesPage() {
   const router = useRouter();
 
   const { shop } = useUserContext();
@@ -29,7 +27,7 @@ export default function PurchasesPage() {
   const getPurchases = async () => {
     try {
       const perPage = 20;
-      const res = await axios.get("/api/buy", {
+      const res = await axios.get("/api/purchase", {
         params: { page, perPage },
       });
 
@@ -64,19 +62,14 @@ export default function PurchasesPage() {
   // render
   return (
     <div className="mb-8">
-      <PageHeader title="المشتريات" icon={<RiBillLine />}>
-        <Link href="/manager/purchases/add" className="btn">
-          <TbLayoutGridAdd />
-          <span>إضافة فاتورة</span>
-        </Link>
-      </PageHeader>
+      <PageHeader title="المبيعات" icon={<LiaMoneyBillWaveSolid />} />
 
       <Table.Root variant="outline">
         <Table.Header>
           <Table.Row>
-            <Table.ColumnHeader>الوقت والتاريخ</Table.ColumnHeader>
-            <Table.ColumnHeader>ملاحظات</Table.ColumnHeader>
+            <Table.ColumnHeader>العميل</Table.ColumnHeader>
             <Table.ColumnHeader>المبلغ</Table.ColumnHeader>
+            <Table.ColumnHeader>الوقت والتاريخ</Table.ColumnHeader>
           </Table.Row>
         </Table.Header>
         <Table.Body>
@@ -84,14 +77,14 @@ export default function PurchasesPage() {
             <Table.Row
               key={purchase._id}
               className="hover:bg-gray-200 cursor-pointer"
-              onClick={(e) => router.push(`/manager/purchases/${purchase._id}`)}
+              onClick={(e) =>
+                router.push(`/manager/sales/${purchase._id}?header=no`)
+              }
             >
+              <Table.Cell>{purchase.client?.name}</Table.Cell>
+              <Table.Cell>{purchase.total.toFixed(2)}</Table.Cell>
               <Table.Cell>
                 {moment(purchase.createdAt).format("LTS - L")}
-              </Table.Cell>
-              <Table.Cell>{purchase.notes}</Table.Cell>
-              <Table.Cell>
-                {purchase.total.toFixed(2)} {shop.currency}
               </Table.Cell>
             </Table.Row>
           ))}

@@ -17,6 +17,10 @@ import { HiOutlineDotsVertical } from "react-icons/hi";
 import { MdOutlineModeEditOutline } from "react-icons/md";
 import { MdDelete } from "react-icons/md";
 import { FaBarcode } from "react-icons/fa6";
+import { LuTableOfContents } from "react-icons/lu";
+import { CiGrid41 } from "react-icons/ci";
+import { Table } from "@chakra-ui/react";
+import { TfiSearch } from "react-icons/tfi";
 
 // components
 import * as Dialog from "@/components/ui/dialog";
@@ -26,6 +30,7 @@ import { Switch } from "@/components/ui/switch";
 import InputField from "~/components/layouts/role/InputField";
 import SelectField from "~/components/layouts/role/SelectField";
 import PageHeader from "~/components/layouts/role/PageHeader";
+import { Tabs } from "@chakra-ui/react";
 import { HStack } from "@chakra-ui/react";
 import { IconButton } from "@mui/material";
 import { SimpleTreeView } from "@mui/x-tree-view/SimpleTreeView";
@@ -63,7 +68,7 @@ export default function Inventory() {
       setCategories(data);
       getProducts();
     } catch (err) {
-      console.log(err);
+      console.error(err);
       toast.error(err.response?.data?.error || err.message);
     } finally {
       setCategoriesLoading(false);
@@ -154,6 +159,12 @@ function List({
 }) {
   const [category, setCategory] = useState("all");
   const [onlyShowEmpty, setOnlyShowEmpty] = useState(false);
+  const [search, setSearch] = useState("");
+
+  const views = [
+    { name: "table", icon: <LuTableOfContents /> },
+    { name: "grid", icon: <CiGrid41 /> },
+  ];
 
   return (
     <>
@@ -223,26 +234,314 @@ function List({
             {loading ? (
               <Loader />
             ) : (
-              <ul className="grid grid-cols-2 gap-6 ">
-                {list
-                  .filter((i) =>
-                    category != "all" ? i.category.name == category : true
-                  )
-                  .filter((i) => (onlyShowEmpty ? i.min >= i.store : true))
-                  .map((item) => (
-                    <Item
-                      key={item._id}
-                      item={item}
-                      action={getCategories}
-                      categories={categories}
+              <Tabs.Root defaultValue="table" variant="enclosed">
+                <div className="flex items-center justify-between">
+                  <div className="border rounded-full bg-white overflow-hidden">
+                    <input
+                      className="w-60 px-4 py-2 text-sm"
+                      placeholder="بحث..."
+                      onChange={(e) => setSearch(e.target.value)}
                     />
-                  ))}
-              </ul>
+
+                    <IconButton>
+                      <TfiSearch fontSize="inherit" />
+                    </IconButton>
+                  </div>
+
+                  <Tabs.List>
+                    {views.map((i) => (
+                      <Tabs.Trigger value={i.name} key={i.name}>
+                        {i.icon}
+                      </Tabs.Trigger>
+                    ))}
+                  </Tabs.List>
+                </div>
+                <Tabs.Content value="table">
+                  <TableView
+                    {...{
+                      list,
+                      category,
+                      onlyShowEmpty,
+                      categories,
+                      getCategories,
+                      search,
+                    }}
+                  />
+                </Tabs.Content>
+                <Tabs.Content value="grid">
+                  <GridView
+                    {...{
+                      list,
+                      category,
+                      onlyShowEmpty,
+                      categories,
+                      getCategories,
+                      search,
+                    }}
+                  />
+                </Tabs.Content>
+              </Tabs.Root>
             )}
           </main>
         </div>
       )}
     </>
+  );
+}
+
+function GridView({
+  list,
+  category,
+  onlyShowEmpty,
+  categories,
+  getCategories,
+  search,
+}) {
+  return (
+    <ul className="grid grid-cols-2 gap-6 ">
+      {list
+        .filter((i) => (category != "all" ? i.category.name == category : true))
+        .filter((i) => (onlyShowEmpty ? i.min >= i.store : true))
+        .filter((i) => {
+          const regex = new RegExp(search);
+          return regex.test(i.name);
+        })
+        .map((item) => (
+          <Item
+            key={item._id}
+            item={item}
+            action={getCategories}
+            categories={categories}
+          />
+        ))}
+    </ul>
+  );
+}
+
+function TableView({
+  list,
+  category,
+  onlyShowEmpty,
+  categories,
+  getCategories,
+  search,
+}) {
+  return (
+    <Table.Root variant="outline">
+      <Table.Header>
+        <Table.Row>
+          <Table.ColumnHeader>الصنف</Table.ColumnHeader>
+          <Table.ColumnHeader>قسم</Table.ColumnHeader>
+          <Table.ColumnHeader>الكمية</Table.ColumnHeader>
+          <Table.ColumnHeader></Table.ColumnHeader>
+          <Table.ColumnHeader></Table.ColumnHeader>
+        </Table.Row>
+      </Table.Header>
+
+      <Table.Body>
+        {list
+          .filter((i) =>
+            category != "all" ? i.category.name == category : true
+          )
+          .filter((i) => (onlyShowEmpty ? i.min >= i.store : true))
+          .filter((i) => {
+            const regex = new RegExp(search);
+            return regex.test(i.name);
+          })
+          .map((item) => (
+            <Row
+              key={item._id}
+              item={item}
+              action={getCategories}
+              categories={categories}
+            />
+          ))}
+      </Table.Body>
+    </Table.Root>
+  );
+}
+
+function Row({ item, action, categories }) {
+  const [unit, setUnit] = useState(0);
+  const [isUpdateOpen, setIsUpdateOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+
+  const units = AllUnits[item.unit || 0];
+
+  const deleteProduct = async () => {
+    try {
+      setLoading(true);
+      const res = await axios.delete("/api/product/" + item._id);
+
+      setIsDeleteOpen(false);
+      action();
+    } catch (err) {
+      console.error(err);
+
+      toast.error(err.response?.data?.error || err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateProduct = async (payload, cb) => {
+    try {
+      setLoading(true);
+      const res = await axios.patch("/api/product/" + item._id, payload);
+
+      setIsUpdateOpen(false);
+      action();
+    } catch (err) {
+      console.error(err);
+
+      toast.error(err.response?.data?.error || err.message);
+    } finally {
+      setLoading(false);
+      cb();
+    }
+  };
+
+  return (
+    <Table.Row>
+      <Table.Cell>{item.name}</Table.Cell>
+      <Table.Cell>{item.category?.name}</Table.Cell>
+      <Table.Cell>
+        {(item.store * units[unit].conversionFactor).toFixed(2)}
+        <span className="text-[#555] text-xs px-2">{units[unit].symbol}</span>
+      </Table.Cell>
+
+      <Table.Cell>
+        <Progress.ProgressRoot
+          size="lg"
+          value={Math.max(0, Math.min(100, (item.store * 100) / item.max))}
+          colorPalette={item.min >= item.store ? "red" : "green"}
+          variant={item.min >= item.store ? "subtle" : "outline"}
+        >
+          <HStack gap="5">
+            <Progress.ProgressBar flex="1" className="rounded-full" />
+            <Progress.ProgressValueText>
+              {((item.store * 100) / item.max).toFixed(2)}%
+            </Progress.ProgressValueText>
+          </HStack>
+        </Progress.ProgressRoot>
+      </Table.Cell>
+      <Table.Cell>
+        <div className="flex-center gap-1 text-gray-500 p-1">
+          <IconButton
+            aria-label="barcode"
+            size="small"
+            onClick={() => {
+              window.open(
+                `/manager/product/barcode/${item.barcode}?header=no`,
+                "_blank"
+              );
+            }}
+          >
+            <FaBarcode fontSize="inherit" />
+          </IconButton>
+
+          <Dialog.DialogRoot
+            open={isUpdateOpen}
+            placement="center"
+            motionPreset="slide-in-bottom"
+          >
+            <Dialog.DialogTrigger asChild>
+              <IconButton
+                aria-label="edit"
+                size="small"
+                onClick={(e) => {
+                  setIsUpdateOpen(true);
+                }}
+              >
+                <MdOutlineModeEditOutline fontSize="inherit" />
+              </IconButton>
+            </Dialog.DialogTrigger>
+            <Dialog.DialogContent>
+              <Dialog.DialogHeader>
+                <Dialog.DialogTitle>
+                  <header className="flex my-3 gap-2 items-center text-xl text-bold">
+                    <MdOutlineModeEditOutline />
+
+                    <span>تعديل المنتج </span>
+                    <q className="bg-slate-200 text-slate-500 text-sm px-2 py-1 rounded">
+                      {item.name}
+                    </q>
+                  </header>
+                  <hr />
+                </Dialog.DialogTitle>
+                <Dialog.DialogCloseTrigger
+                  onClick={() => setIsUpdateOpen(false)}
+                />
+              </Dialog.DialogHeader>
+              <Dialog.DialogBody>
+                {/* form component */}
+                <ProductForm
+                  categories={categories}
+                  action={updateProduct}
+                  initValues={{ ...item, category: item.category._id }}
+                />
+              </Dialog.DialogBody>
+            </Dialog.DialogContent>
+          </Dialog.DialogRoot>
+
+          <Dialog.DialogRoot
+            open={isDeleteOpen}
+            role="alertdialog"
+            motionPreset="slide-in-bottom"
+          >
+            <Dialog.DialogTrigger asChild>
+              <IconButton
+                aria-label="delete"
+                size="small"
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <MdDelete fontSize="inherit" />
+              </IconButton>
+            </Dialog.DialogTrigger>
+            <Dialog.DialogContent>
+              <Dialog.DialogHeader>
+                <Dialog.DialogTitle>
+                  <header className="flex my-3 gap-2 items-center text-xl text-bold">
+                    <MdDelete />
+
+                    <span>حذف المنتج </span>
+                    <q className="bg-slate-200 text-slate-500 text-sm px-2 py-1 rounded">
+                      {item.name}
+                    </q>
+                  </header>
+                  <hr />
+                </Dialog.DialogTitle>
+                <Dialog.DialogCloseTrigger
+                  onClick={() => setIsDeleteOpen(false)}
+                />
+              </Dialog.DialogHeader>
+              <Dialog.DialogBody>
+                <p>هل انت متاكد من حذف {item.name} من النظام ؟</p>
+              </Dialog.DialogBody>
+
+              <Dialog.DialogFooter>
+                <Dialog.DialogActionTrigger asChild>
+                  <Button
+                    className="px-4 py-2 w-22 rounded border"
+                    onClick={() => setIsDeleteOpen(false)}
+                  >
+                    لا
+                  </Button>
+                </Dialog.DialogActionTrigger>
+                <Button
+                  className="bg-red-500 w-22 text-white px-4 py-2 rounded"
+                  onClick={deleteProduct}
+                  loading={loading}
+                >
+                  نعم
+                </Button>
+              </Dialog.DialogFooter>
+            </Dialog.DialogContent>
+          </Dialog.DialogRoot>
+        </div>
+      </Table.Cell>
+    </Table.Row>
   );
 }
 
@@ -288,130 +587,132 @@ function Item({ item, action, categories }) {
   };
 
   return (
-    <li className=" col-span-1 rounded-xl bg-[#f5f7f9] overflow-hidden">
+    <li className=" col-span-1 rounded-xl  overflow-hidden">
       <div className="bg-white p-4 rounded-xl border border-[#e0e2e6] relative z-[1]">
         <header className="flex justify-between mb-8">
           <div>
             <h1>{item.name}</h1>
           </div>
-          <div className="flex-center gap-1 text-gray-500 p-1 border rounded-full">
-            <IconButton
-              aria-label="barcode"
-              size="small"
-              onClick={() => {
-                window.open(
-                  `/manager/product/barcode/${item.barcode}?header=no`,
-                  "_blank"
-                );
-              }}
-            >
-              <FaBarcode fontSize="inherit" />
-            </IconButton>
+          <div>
+            <div className="flex-center gap-1 text-gray-500 p-1 border rounded-full ">
+              <IconButton
+                aria-label="barcode"
+                size="small"
+                onClick={() => {
+                  window.open(
+                    `/manager/product/barcode/${item.barcode}?header=no`,
+                    "_blank"
+                  );
+                }}
+              >
+                <FaBarcode fontSize="inherit" />
+              </IconButton>
 
-            <Dialog.DialogRoot
-              open={isUpdateOpen}
-              placement="center"
-              motionPreset="slide-in-bottom"
-            >
-              <Dialog.DialogTrigger asChild>
-                <IconButton
-                  aria-label="edit"
-                  size="small"
-                  onClick={(e) => {
-                    setIsUpdateOpen(true);
-                  }}
-                >
-                  <MdOutlineModeEditOutline fontSize="inherit" />
-                </IconButton>
-              </Dialog.DialogTrigger>
-              <Dialog.DialogContent>
-                <Dialog.DialogHeader>
-                  <Dialog.DialogTitle>
-                    <header className="flex my-3 gap-2 items-center text-xl text-bold">
-                      <MdOutlineModeEditOutline />
-
-                      <span>تعديل المنتج </span>
-                      <q className="bg-slate-200 text-slate-500 text-sm px-2 py-1 rounded">
-                        {item.name}
-                      </q>
-                    </header>
-                    <hr />
-                  </Dialog.DialogTitle>
-                  <Dialog.DialogCloseTrigger
-                    onClick={() => setIsUpdateOpen(false)}
-                  />
-                </Dialog.DialogHeader>
-                <Dialog.DialogBody>
-                  {/* form component */}
-                  <ProductForm
-                    categories={categories}
-                    action={updateProduct}
-                    initValues={item}
-                  />
-                </Dialog.DialogBody>
-              </Dialog.DialogContent>
-            </Dialog.DialogRoot>
-
-            <Dialog.DialogRoot
-              open={isDeleteOpen}
-              role="alertdialog"
-              motionPreset="slide-in-bottom"
-            >
-              <Dialog.DialogTrigger asChild>
-                <IconButton
-                  aria-label="delete"
-                  size="small"
-                  onClick={() => setIsDeleteOpen(true)}
-                >
-                  <MdDelete fontSize="inherit" />
-                </IconButton>
-              </Dialog.DialogTrigger>
-              <Dialog.DialogContent>
-                <Dialog.DialogHeader>
-                  <Dialog.DialogTitle>
-                    <header className="flex my-3 gap-2 items-center text-xl text-bold">
-                      <MdDelete />
-
-                      <span>حذف المنتج </span>
-                      <q className="bg-slate-200 text-slate-500 text-sm px-2 py-1 rounded">
-                        {item.name}
-                      </q>
-                    </header>
-                    <hr />
-                  </Dialog.DialogTitle>
-                  <Dialog.DialogCloseTrigger
-                    onClick={() => setIsDeleteOpen(false)}
-                  />
-                </Dialog.DialogHeader>
-                <Dialog.DialogBody>
-                  <p>هل انت متاكد من حذف {item.name} من النظام ؟</p>
-                </Dialog.DialogBody>
-
-                <Dialog.DialogFooter>
-                  <Dialog.DialogActionTrigger asChild>
-                    <Button
-                      className="px-4 py-2 w-22 rounded border"
-                      onClick={() => setIsDeleteOpen(false)}
-                    >
-                      لا
-                    </Button>
-                  </Dialog.DialogActionTrigger>
-                  <Button
-                    className="bg-red-500 w-22 text-white px-4 py-2 rounded"
-                    onClick={deleteProduct}
-                    loading={loading}
+              <Dialog.DialogRoot
+                open={isUpdateOpen}
+                placement="center"
+                motionPreset="slide-in-bottom"
+              >
+                <Dialog.DialogTrigger asChild>
+                  <IconButton
+                    aria-label="edit"
+                    size="small"
+                    onClick={(e) => {
+                      setIsUpdateOpen(true);
+                    }}
                   >
-                    نعم
-                  </Button>
-                </Dialog.DialogFooter>
-              </Dialog.DialogContent>
-            </Dialog.DialogRoot>
+                    <MdOutlineModeEditOutline fontSize="inherit" />
+                  </IconButton>
+                </Dialog.DialogTrigger>
+                <Dialog.DialogContent>
+                  <Dialog.DialogHeader>
+                    <Dialog.DialogTitle>
+                      <header className="flex my-3 gap-2 items-center text-xl text-bold">
+                        <MdOutlineModeEditOutline />
+
+                        <span>تعديل المنتج </span>
+                        <q className="bg-slate-200 text-slate-500 text-sm px-2 py-1 rounded">
+                          {item.name}
+                        </q>
+                      </header>
+                      <hr />
+                    </Dialog.DialogTitle>
+                    <Dialog.DialogCloseTrigger
+                      onClick={() => setIsUpdateOpen(false)}
+                    />
+                  </Dialog.DialogHeader>
+                  <Dialog.DialogBody>
+                    {/* form component */}
+                    <ProductForm
+                      categories={categories}
+                      action={updateProduct}
+                      initValues={{ ...item, category: item.category._id }}
+                    />
+                  </Dialog.DialogBody>
+                </Dialog.DialogContent>
+              </Dialog.DialogRoot>
+
+              <Dialog.DialogRoot
+                open={isDeleteOpen}
+                role="alertdialog"
+                motionPreset="slide-in-bottom"
+              >
+                <Dialog.DialogTrigger asChild>
+                  <IconButton
+                    aria-label="delete"
+                    size="small"
+                    onClick={() => setIsDeleteOpen(true)}
+                  >
+                    <MdDelete fontSize="inherit" />
+                  </IconButton>
+                </Dialog.DialogTrigger>
+                <Dialog.DialogContent>
+                  <Dialog.DialogHeader>
+                    <Dialog.DialogTitle>
+                      <header className="flex my-3 gap-2 items-center text-xl text-bold">
+                        <MdDelete />
+
+                        <span>حذف المنتج </span>
+                        <q className="bg-slate-200 text-slate-500 text-sm px-2 py-1 rounded">
+                          {item.name}
+                        </q>
+                      </header>
+                      <hr />
+                    </Dialog.DialogTitle>
+                    <Dialog.DialogCloseTrigger
+                      onClick={() => setIsDeleteOpen(false)}
+                    />
+                  </Dialog.DialogHeader>
+                  <Dialog.DialogBody>
+                    <p>هل انت متاكد من حذف {item.name} من النظام ؟</p>
+                  </Dialog.DialogBody>
+
+                  <Dialog.DialogFooter>
+                    <Dialog.DialogActionTrigger asChild>
+                      <Button
+                        className="px-4 py-2 w-22 rounded border"
+                        onClick={() => setIsDeleteOpen(false)}
+                      >
+                        لا
+                      </Button>
+                    </Dialog.DialogActionTrigger>
+                    <Button
+                      className="bg-red-500 w-22 text-white px-4 py-2 rounded"
+                      onClick={deleteProduct}
+                      loading={loading}
+                    >
+                      نعم
+                    </Button>
+                  </Dialog.DialogFooter>
+                </Dialog.DialogContent>
+              </Dialog.DialogRoot>
+            </div>
           </div>
         </header>
         <main className="flex justify-between mb-12">
           <div>
             <h3 className="text-2xl">
-              {item.store * units[unit].conversionFactor}
+              {(item.store * units[unit].conversionFactor).toFixed(2)}
               <span className="text-[#555] text-xs px-2">
                 {units[unit].symbol}
               </span>
@@ -440,8 +741,8 @@ function Item({ item, action, categories }) {
           <Progress.ProgressRoot
             size="lg"
             value={Math.max(0, Math.min(100, (item.store * 100) / item.max))}
-            colorPalette={item.min > item.store ? "red" : "green"}
-            variant={item.min > item.store ? "subtle" : "outline"}
+            colorPalette={item.min >= item.store ? "red" : "green"}
+            variant={item.min >= item.store ? "subtle" : "outline"}
           >
             <HStack gap="5">
               <Progress.ProgressBar flex="1" className="rounded-full" />
@@ -452,7 +753,7 @@ function Item({ item, action, categories }) {
           </Progress.ProgressRoot>
         </div>
       </div>
-      <div className="border border-[#e0e2e6] p-4 rounded-xl relative pt-10 mt-[-30px] z-0">
+      <div className="border border-[#e0e2e6] bg-[#f5f7f9] p-4 rounded-xl relative pt-10 mt-[-30px] z-0">
         <div className="flex gap-4 items-center text-[#585a5c]">
           <TbCategoryFilled />
           <span>{item.category?.name}</span>
@@ -716,8 +1017,8 @@ function ProductForm({ categories, action, initValues = {} }) {
         ...payload,
         barcode: payload.barcode || Math.ceil(Math.random() * Date.now()),
         store: payload.store / payload.s_unit,
-        purchase_price: payload.purchase_price / payload.a_unit,
-        selling_price: payload.selling_price / payload.b_unit,
+        purchase_price: payload.purchase_price * payload.a_unit,
+        selling_price: payload.selling_price * payload.b_unit,
       },
       () => setLoading(false)
     );

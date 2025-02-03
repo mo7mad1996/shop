@@ -44,7 +44,7 @@ export default function Header() {
         <div className="flex items-center gap-2 py-3">
           <div className="logo">
             <Link href="/">
-              <Image src={trueemit} alt="trueemit" height={70} />
+              <Image src={trueemit} alt="trueemit" height={70} priority />
             </Link>
           </div>
 

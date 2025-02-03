@@ -89,7 +89,7 @@ function AddClient({ action }) {
     >
       <Dialog.DialogTrigger asChild>
         <button className="btn" onClick={() => setOpen(true)}>
-          <span>اضف منتج</span>
+          <span>عميل جديد</span>
           <FaPlus />
         </button>
       </Dialog.DialogTrigger>

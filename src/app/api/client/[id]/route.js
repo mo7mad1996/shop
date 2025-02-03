@@ -4,6 +4,17 @@ import Client from "~/Models/Client";
 
 connectDB();
 
+export const GET = async (req, { params }) => {
+  const { id } = await params;
+
+  try {
+    const client = await Client.findById(id);
+    return NextResponse.json(client);
+  } catch (err) {
+    return NextResponse.json({ error: err.message }, { status: 500 });
+  }
+};
+
 export const PATCH = async (req, { params }) => {
   const { id } = await params;
 

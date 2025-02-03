@@ -1,3 +1,5 @@
+"use client";
+
 // components
 import { Grid, For, Box, GridItem } from "@chakra-ui/react";
 import Link from "next/link";
